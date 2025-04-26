@@ -1,0 +1,81 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.5'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.github.node-gradle.node' version '3.5.1'
+}
+
+group = 'com.lokdashboard'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'com.h2database:h2'
+	
+	// Rate limiting support
+	implementation 'com.github.vladimir-bukhtoyarov:bucket4j-core:7.6.0'
+	
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+// Node.js configuration for frontend build
+node {
+	version = '16.14.0'
+	npmVersion = '8.3.1'
+	download = true
+	nodeProjectDir = file("${project.projectDir}")
+}
+
+// Task to install npm dependencies
+task installDependencies(type: NpmTask) {
+	args = ['install']
+}
+
+// Task to build the React app
+task buildReactApp(type: NpmTask) {
+	dependsOn installDependencies
+	args = ['run', 'build']
+}
+
+// Make the processResources task depend on the React build
+processResources {
+	dependsOn buildReactApp
+}
+
+// Copy the React build output to the Spring Boot static resources directory
+task copyReactBuild(type: Copy) {
+	dependsOn buildReactApp
+	from "${project.projectDir}/src/main/resources/static/js/app/bundle.js"
+	into "${buildDir}/resources/main/static/js/app"
+}
+
+// Make sure the Spring Boot processResources task depends on copying the React build
+bootJar {
+	dependsOn copyReactBuild
+}
