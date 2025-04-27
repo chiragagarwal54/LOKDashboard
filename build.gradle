@@ -83,3 +83,7 @@ bootJar {
 tasks.named('resolveMainClassName') {
 	dependsOn tasks.named('copyReactBuild')
 }
+
+tasks.named('jar') {
+	dependsOn tasks.named('copyReactBuild')
+}
