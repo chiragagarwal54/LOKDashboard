@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @AllArgsConstructor
@@ -24,6 +25,7 @@ public class LandBatchJobService {
     private final LandRepository landRepository;
     private final BatchJobRepository batchJobRepository;
     private final Utils utils;
+    private final AtomicBoolean batchJobRunning = new AtomicBoolean(false);
 
     /**
      * Run when the application starts up to check for and run today's batch job if needed
@@ -94,19 +96,14 @@ public class LandBatchJobService {
      * Check at midnight and every 8 hours if today's batch job was successful, retry if not
      * Also runs once at application startup via @PostConstruct
      */
-    private final Object lock = new Object();
-    private boolean isRunning;
-
     @Scheduled(cron = "0 0 1/8 * * ?", zone = "UTC")
     public void checkAndRetryBatchJob() {
-        synchronized (lock) {
-            if (isRunning) {
-                log.info("checkAndRetryBatchJob is already running. Skipping this invocation.");
-                return;
-            }
-            isRunning = true;
+        // Ensure only one instance can execute at a time
+        if (!batchJobRunning.compareAndSet(false, true)) {
+            log.info("Another batch job check is already in progress, skipping this execution");
+            return;
         }
-
+        
         try {
             log.info("Checking if today's batch job needs to be retried");
             LocalDate yesterday = LocalDate.now(java.time.Clock.systemUTC()).minusDays(1);
@@ -121,12 +118,10 @@ public class LandBatchJobService {
                 log.info("Today's batch job was already successful, no need to retry");
             }
         } finally {
-            synchronized (lock) {
-                isRunning = false;
-            }
+            // Reset the flag to allow future executions
+            batchJobRunning.set(false);
         }
     }
-
 
     private void checkLandDataAndSave(String landId, LocalDate date) {
         if(!landRepository.checkIfDataExistsForDate(landId, date)) {
