@@ -94,21 +94,39 @@ public class LandBatchJobService {
      * Check at midnight and every 8 hours if today's batch job was successful, retry if not
      * Also runs once at application startup via @PostConstruct
      */
+    private final Object lock = new Object();
+    private boolean isRunning;
+
     @Scheduled(cron = "0 0 1/8 * * ?", zone = "UTC")
     public void checkAndRetryBatchJob() {
-        log.info("Checking if today's batch job needs to be retried");
-        LocalDate yesterday = LocalDate.now(java.time.Clock.systemUTC()).minusDays(1);
-        
-        BatchJobStatus latestStatus = batchJobRepository.getLatestBatchJobStatusForDate(yesterday);
-        
-        // If there's no status for today yet or the last status is FAILED, run the batch job
-        if (latestStatus == null || "FAILED".equals(latestStatus.getStatus())) {
-            log.info("No successful batch job found for today, retrying for date: {}...", yesterday);
-            runDailyBatchJob();
-        } else {
-            log.info("Today's batch job was already successful, no need to retry");
+        synchronized (lock) {
+            if (isRunning) {
+                log.info("checkAndRetryBatchJob is already running. Skipping this invocation.");
+                return;
+            }
+            isRunning = true;
+        }
+
+        try {
+            log.info("Checking if today's batch job needs to be retried");
+            LocalDate yesterday = LocalDate.now(java.time.Clock.systemUTC()).minusDays(1);
+
+            BatchJobStatus latestStatus = batchJobRepository.getLatestBatchJobStatusForDate(yesterday);
+
+            // If there's no status for today yet or the last status is FAILED, run the batch job
+            if (latestStatus == null || "FAILED".equals(latestStatus.getStatus())) {
+                log.info("No successful batch job found for today, retrying for date: {}...", yesterday);
+                runDailyBatchJob();
+            } else {
+                log.info("Today's batch job was already successful, no need to retry");
+            }
+        } finally {
+            synchronized (lock) {
+                isRunning = false;
+            }
         }
     }
+
 
     private void checkLandDataAndSave(String landId, LocalDate date) {
         if(!landRepository.checkIfDataExistsForDate(landId, date)) {
