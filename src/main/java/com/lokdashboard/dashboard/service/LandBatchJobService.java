@@ -23,6 +23,7 @@ public class LandBatchJobService {
 
     private final LandRepository landRepository;
     private final BatchJobRepository batchJobRepository;
+    private final Utils utils;
 
     /**
      * Run when the application starts up to check for and run today's batch job if needed
@@ -30,7 +31,7 @@ public class LandBatchJobService {
     @PostConstruct
     public void init() {
         log.info("Initializing batch job checker at application startup");
-        checkAndRetryBatchJob();
+        new Thread(this::checkAndRetryBatchJob).start();
     }
     
     /**
@@ -38,8 +39,8 @@ public class LandBatchJobService {
      */
     @Scheduled(cron = "0 30 6 * * ?", zone = "UTC")
     public void runDailyBatchJob() {
-        log.info("Starting daily batch job at {}", LocalDateTime.now());
         LocalDate yesterday = LocalDate.now(java.time.Clock.systemUTC()).minusDays(1);
+        log.info("Starting daily batch job at for date {}", yesterday);
         // List of land IDs to process
         int start_land_id = 132768;
         int end_land_id = 165535;
@@ -58,15 +59,9 @@ public class LandBatchJobService {
                 totalCount++;
                 
                 try {
-                    Land land = landRepository.getAllContributionForADay(yesterday, landId.toString());
+                    checkLandDataAndSave(landId.toString(), yesterday);
                     
-                    // Check if the land has a null owner, which indicates a bad land
-                    if (land.getOwner() == null) {
-                        log.warn("Found land with null owner: {}", landId);
-                        batchJobRepository.saveBadLand(new BadLand(landId.toString(), LocalDateTime.now()));
-                    } else {
-                        successCount++;
-                    }
+                    successCount++;
                     log.info("Processed land ID: {}, total processed count now : {}", landId, successCount);
                 } catch (Exception e) {
                     log.error("Error processing land {}: {}", landId, e.getMessage(), e);
@@ -99,7 +94,7 @@ public class LandBatchJobService {
      * Check at midnight and every 8 hours if today's batch job was successful, retry if not
      * Also runs once at application startup via @PostConstruct
      */
-    @Scheduled(cron = "0 0 0/8 * * ?", zone = "UTC")
+    @Scheduled(cron = "0 0 1/8 * * ?", zone = "UTC")
     public void checkAndRetryBatchJob() {
         log.info("Checking if today's batch job needs to be retried");
         LocalDate yesterday = LocalDate.now(java.time.Clock.systemUTC()).minusDays(1);
@@ -108,10 +103,17 @@ public class LandBatchJobService {
         
         // If there's no status for today yet or the last status is FAILED, run the batch job
         if (latestStatus == null || "FAILED".equals(latestStatus.getStatus())) {
-            log.info("No successful batch job found for today, retrying...");
+            log.info("No successful batch job found for today, retrying for date: {}...", yesterday);
             runDailyBatchJob();
         } else {
             log.info("Today's batch job was already successful, no need to retry");
+        }
+    }
+
+    private void checkLandDataAndSave(String landId, LocalDate date) {
+        if(!landRepository.checkIfDataExistsForDate(landId, date)) {
+            Land land = utils.getContributions(landId, date, date);
+            landRepository.saveLandData(land, date);
         }
     }
 } 

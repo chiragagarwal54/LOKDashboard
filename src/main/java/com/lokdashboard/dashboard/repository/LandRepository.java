@@ -1,6 +1,6 @@
 package com.lokdashboard.dashboard.repository;
 
-import com.lokdashboard.dashboard.Utils;
+import com.lokdashboard.dashboard.service.Utils;
 import com.lokdashboard.dashboard.models.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ public class LandRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final Utils utils;
-    private void saveLandData(Land land, LocalDate date) {
+    public void saveLandData(Land land, LocalDate date) {
         log.info("Saving land data for land ID: {}", land.getId());
         Integer checkCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM LAND WHERE LAND_ID = '" + land.getId() + "'", Integer.class);
         if(checkCount == 0) {
@@ -44,9 +44,7 @@ public class LandRepository {
     }
 
     public Land getAllContributionForADay(LocalDate date, String landId) {
-        Integer contributionCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM CONTRIBUTION where land_id = '" + landId + "' and contribution_date = '" + date + "'", Integer.class);
-
-        if(contributionCount == 0) {
+        if(!checkIfDataExistsForDate(landId, date)) {
             Land land = utils.getContributions(landId, date, date);
             saveLandData(land, date);
         }
@@ -138,5 +136,10 @@ public class LandRepository {
                     return landTotalPoints;
                 }).toList());
         return result;
+    }
+
+    public boolean checkIfDataExistsForDate(String landId, LocalDate date) {
+        Integer contributionCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM CONTRIBUTION where land_id = '" + landId + "' and contribution_date = '" + date + "'", Integer.class);
+        return contributionCount > 0;
     }
 }

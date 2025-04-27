@@ -116,3 +116,37 @@ Caused by: org.h2.jdbc.JdbcSQLNonTransientConnectionException: The connection wa
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
 	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
 	... 16 more
+2025-04-27 11:27:35.234779+05:30 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "select unique [*]land_id from CONTRIBUTION where CONTRIBUTION_DATE = '2025-04-26'"; expected "NULLS, ("; SQL statement:
+select unique land_id from CONTRIBUTION where CONTRIBUTION_DATE = '2025-04-26' [42001-232]
+2025-04-27 11:27:58.003182+05:30 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "select land_id from CONTRIBUTION where CONTRIBUTION_DATE = '2025-04-26' [*]groupby land_id"; SQL statement:
+select land_id from CONTRIBUTION where CONTRIBUTION_DATE = '2025-04-26' groupby land_id [42000-232]
+2025-04-27 11:28:02.978822+05:30 jdbc[14]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "select land_id from CONTRIBUTION where CONTRIBUTION_DATE = '2025-04-26' [*]group_by land_id"; SQL statement:
+select land_id from CONTRIBUTION where CONTRIBUTION_DATE = '2025-04-26' group_by land_id [42000-232]
+2025-04-27 12:53:51.982868+05:30 jdbc[36]: null
+org.h2.message.DbException: The connection was not closed by the application and is garbage collected [90018-232]
+	at org.h2.message.DbException.get(DbException.java:223)
+	at org.h2.message.DbException.get(DbException.java:199)
+	at org.h2.message.DbException.get(DbException.java:188)
+	at org.h2.jdbc.JdbcConnection.closeOld(JdbcConnection.java:217)
+	at org.h2.jdbc.JdbcConnection.<init>(JdbcConnection.java:134)
+	at org.h2.Driver.connect(Driver.java:59)
+	at com.zaxxer.hikari.util.DriverDataSource.getConnection(DriverDataSource.java:137)
+	at com.zaxxer.hikari.pool.PoolBase.newConnection(PoolBase.java:360)
+	at com.zaxxer.hikari.pool.PoolBase.newPoolEntry(PoolBase.java:202)
+	at com.zaxxer.hikari.pool.HikariPool.createPoolEntry(HikariPool.java:461)
+	at com.zaxxer.hikari.pool.HikariPool$PoolEntryCreator.call(HikariPool.java:724)
+	at com.zaxxer.hikari.pool.HikariPool$PoolEntryCreator.call(HikariPool.java:703)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1570)
+Caused by: org.h2.jdbc.JdbcSQLNonTransientConnectionException: The connection was not closed by the application and is garbage collected [90018-232]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:690)
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
+	... 16 more
+2025-04-27 12:59:51.781185+05:30 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "select count(*) from CONTRIBUTION wherre [*]contribution_date = '2025-04-26' group by land_id"; SQL statement:
+select count(*) from CONTRIBUTION wherre contribution_date = '2025-04-26' group by land_id [42000-232]

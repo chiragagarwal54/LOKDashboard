@@ -27,12 +27,11 @@ public class ApiService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${api.rate-limit.tokens-per-period:50}")
+    @Value("${api.rate-limit.tokens-per-period:60}")
     private int tokensPerPeriod;
 
     @Value("${api.rate-limit.period-in-seconds:60}")
     private int periodInSeconds;
-    
     @Value("${api.retry.max-attempts:5}")
     private int maxRetryAttempts;
     

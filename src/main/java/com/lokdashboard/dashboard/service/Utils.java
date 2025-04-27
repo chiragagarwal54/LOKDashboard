@@ -1,4 +1,4 @@
-package com.lokdashboard.dashboard;
+package com.lokdashboard.dashboard.service;
 
 import com.lokdashboard.dashboard.models.Contribution;
 import com.lokdashboard.dashboard.models.Land;
