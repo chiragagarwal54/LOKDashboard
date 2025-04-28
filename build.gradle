@@ -10,7 +10,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 
@@ -71,11 +71,19 @@ processResources {
 // Copy the React build output to the Spring Boot static resources directory
 task copyReactBuild(type: Copy) {
 	dependsOn buildReactApp
-	from "${project.projectDir}/src/main/resources/static/js/app/bundle.js"
+	from "${project.projectDir}/src/main/resources/static/js/app"
 	into "${buildDir}/resources/main/static/js/app"
 }
 
 // Make sure the Spring Boot processResources task depends on copying the React build
 bootJar {
 	dependsOn copyReactBuild
+}
+
+tasks.named('resolveMainClassName') {
+	dependsOn tasks.named('copyReactBuild')
+}
+
+tasks.named('jar') {
+	dependsOn tasks.named('copyReactBuild')
 }
